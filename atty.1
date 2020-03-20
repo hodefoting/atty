@@ -1,0 +1,44 @@
+.TH atty 1
+.SH NAME
+atty \- audio interface and driver for terminals
+.SH SYNOPSIS
+.B atty
+.PP
+.B atty
+[\fBmic\fR|\fBspeaker\fR]
+.PP
+.B atty
+key=val key=val
+.SH OPTIONS
+To configure the audio-settings of a terminal session pass key=value
+pairs on the commandline describing the desired configuration. Run
+without arguments to initialize - or print current sound settings.
+.TP
+.BR samplerate
+Set the samplerate in hz, valid values are 8000 16000 24000 and 48000
+.TP
+.BR bits
+Set number of bits, 8 or 16
+.TP
+.BR channels
+Set number of channels, 1 for mono 2 for stereo
+.TP
+.BR type
+Set type of samples, valid values are ulaw or signed.
+.TP
+.BR encoding
+Set type of encoding, atty accepts base64 and ascii85
+.SH  DESCRIPTION
+.B atty
+audio interface and driver for terminals. Depend on the action argument can
+act as a microphone source or speaker using the terminal as transport.
+.SH  ENVIRONMENT
+The SHELL variable is consulted to detrtminr which shell to launch
+when creating the atty engine.
+.SH  EXAMPLES
+.B atty
+Initializes atty or prints the current audio settings, when initializing
+atty the command to execute is taken from the SHELL environment variable.
+.PP
+.B atty mic > file
+
