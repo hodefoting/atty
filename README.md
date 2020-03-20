@@ -41,7 +41,7 @@ Will play back the same file.
 
 
 Protocol
-~~~~~~~~
+--------
 
 The protocol is formed around an APC message ESC _ A the protocol is
 inspired by how kitty does its image transport:
@@ -96,10 +96,15 @@ Recording uses the same settings as playback, passing the value 1 to
 the key 'm' turns on recording, and 0 turns it off.
 
 Possible future plans
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 Prompt operator to acknowledge use of microphone (blink terminal, and show message in titlebar and hijack keypresses until either y or n.
 
 Add support for zlib and opus as compression methods for the payload.
 
 Split configuration of microphone/speaker?
+
+To support the development of atty and dissimilar technologies; consider
+supporting the author at https://patreon.com/pippin and
+https://liberapay.com/pippin
+
