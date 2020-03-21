@@ -335,7 +335,7 @@ static void audio_task (MrgVT *vt, int click)
        }
 
        /* XXX  override it always use s16 stereo as output,
-	*      and do our own conversions to that
+        *      and do our own conversions to that
         */
       spec_want.format = AUDIO_S16;
       spec_want.channels = 2;
@@ -1231,14 +1231,14 @@ void vt_audio (MrgVT *vt, const char *command)
       const char *range="";
       switch (key)
       {
-	case 's':range="8000,16000,24000,48000";break;
-	case 'b':range="8,16";break;
-	case 'c':range="1";break;
-	case 'T':range="u,s,f";break;
-	case 'e':range="b,a";break;
-	case 'o':range="z,0";break;
-	case 'a':range="t,q";break;
-	default:range="unknown";break;
+        case 's':range="8000,16000,24000,48000";break;
+        case 'b':range="8,16";break;
+        case 'c':range="1";break;
+        case 'T':range="u,s,f";break;
+        case 'e':range="b,a";break;
+        case 'o':range="z,0";break;
+        case 'a':range="t,q";break;
+        default:range="unknown";break;
       }
       sprintf (buf, "\e_A%c=?;%s\e\\", key, range);
       vt_write (vt, buf, strlen(buf));
@@ -1256,8 +1256,8 @@ void vt_audio (MrgVT *vt, const char *command)
       case 'e': audio->encoding = value; configure = 1; break;
       case 'o': audio->compression = value; configure = 1; break;
       case 'm': 
-	audio->mic = value?1:0;
-	break;
+        audio->mic = value?1:0;
+        break;
     }
 
     if (configure)
@@ -1288,18 +1288,18 @@ void vt_audio (MrgVT *vt, const char *command)
 
       switch (audio->type)
       {
-	case 'u':
-	case 's':
-	case 'f':
-	  break;
+        case 'u':
+        case 's':
+        case 'f':
+          break;
         default:
-	  audio->type = 's';
+          audio->type = 's';
       }
 
       /* onlt 1 and 2 channels supported */
       if (audio->channels <= 0 || audio->channels > 2)
       {
-	audio->channels = 1;
+        audio->channels = 1;
       }
     }
   }
@@ -1329,13 +1329,13 @@ void vt_audio (MrgVT *vt, const char *command)
     switch (audio->encoding)
     {
       case 'y':
-	audio->data_size = ydec (audio->data, audio->data, audio->data_size);
+        audio->data_size = ydec (audio->data, audio->data, audio->data_size);
       break;
       case 'a':
       {
         int bin_length = audio->data_size;
-	if (bin_length)
-	{
+        if (bin_length)
+        {
         uint8_t *data2 = malloc ((unsigned int)vt_a85len ((char*)audio->data, audio->data_size));
         bin_length = vt_a85dec ((char*)audio->data,
                                 (void*)data2,
@@ -1343,7 +1343,7 @@ void vt_audio (MrgVT *vt, const char *command)
         memcpy (audio->data, data2, bin_length + 1);
         audio->data_size = bin_length;
         free (data2);
-	}
+        }
       }
       break;
 
@@ -1365,8 +1365,8 @@ void vt_audio (MrgVT *vt, const char *command)
     {
       case 'z':
     {
-	    // XXX  :  relying on user provided input on size here
-	    //         look into making this safer
+            // XXX  :  relying on user provided input on size here
+            //         look into making this safer
             //vt->gfx.buf_size)
       unsigned long actual_uncompressed_size = audio->frames * audio->bits/8 * audio->channels;
       unsigned char *data2 = malloc (actual_uncompressed_size);
@@ -1386,11 +1386,11 @@ void vt_audio (MrgVT *vt, const char *command)
       audio->data_size = actual_uncompressed_size;
     }
 
-	break;
+        break;
       case 'o':
-	break;
+        break;
       default:
-	break;
+        break;
     }
 
     if (audio->frames == 0)
@@ -1426,30 +1426,30 @@ void vt_audio (MrgVT *vt, const char *command)
     case 't': // transfer
        if (audio->type == 'u') // implied 8bit
        {
-	 if (audio->channels == 2)
-	 {
+         if (audio->channels == 2)
+         {
            for (int i = 0; i < audio->frames; i++)
            {
              int val_left = MuLawDecompressTable[audio->data[i*2]];
              int val_right = MuLawDecompressTable[audio->data[i*2+1]];
              terminal_queue_pcm (val_left, val_right);
            }
-	 }
-	 else
-	 {
+         }
+         else
+         {
            for (int i = 0; i < audio->frames; i++)
            {
              int val = MuLawDecompressTable[audio->data[i]];
              terminal_queue_pcm (val, val);
            }
-	 }
+         }
        }
        else if (audio->type == 's')
        {
-	 if (audio->bits == 8)
-	 {
-	   if (audio->channels == 2)
-	   {
+         if (audio->bits == 8)
+         {
+           if (audio->channels == 2)
+           {
              for (int i = 0; i < audio->frames; i++)
              {
                int val_left = ((int8_t*)(audio->data))[i*2];
@@ -1458,18 +1458,18 @@ void vt_audio (MrgVT *vt, const char *command)
              }
            }
            else
-	   {
+           {
              for (int i = 0; i < audio->frames; i++)
              {
                int val = ((int8_t*)(audio->data))[i];
                terminal_queue_pcm (val, val);
              }
-	   }
-	 }
-	 else
-	 {
-	   if (audio->channels == 2)
-	   {
+           }
+         }
+         else
+         {
+           if (audio->channels == 2)
+           {
              for (int i = 0; i < audio->frames; i++)
              {
                int val_left = ((int16_t*)(audio->data))[i*2];
@@ -1478,14 +1478,14 @@ void vt_audio (MrgVT *vt, const char *command)
              }
            }
            else
-	   {
+           {
              for (int i = 0; i < audio->frames; i++)
              {
                int val = ((int16_t*)(audio->data))[i];
                terminal_queue_pcm (val, val);
              }
-	   }
-	 }
+           }
+         }
        }
        free (audio->data);
        audio->data = NULL;
@@ -1493,7 +1493,7 @@ void vt_audio (MrgVT *vt, const char *command)
        break;
     case 'q': // query
        {
-	 char buf[512];
+         char buf[512];
          sprintf (buf, "\e_As=%i,b=%i,c=%i,T=%c,e=%c,o=%c;OK\e\\",
       audio->samplerate, audio->bits, audio->channels,
       audio->type, audio->encoding, audio->compression

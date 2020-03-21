@@ -388,7 +388,7 @@ void atty_speaker (void)
         if (z_result != Z_OK)
         {
           printf ("\e_Ao=z;zlib error\e\\");
-	  continue;
+          continue;
         }
         else
         {
@@ -404,7 +404,7 @@ void atty_speaker (void)
       }
       if (encoding == 'b')
       {
-	// TODO
+        // TODO
       }
 
       fprintf (stdout, "\033_Af=%i;", len / channels / (bits/8));
@@ -437,69 +437,69 @@ int main (int argc, char **argv)
       if (!strcmp (key, "samplerate") || !strcmp (key, "s"))
       {
         sprintf (&config[strlen(config)],
-	         "%ss=%i", config[0]?",":"", atoi(value));
+                 "%ss=%i", config[0]?",":"", atoi(value));
       }
       else if (!strcmp (key, "bits") ||  !strcmp (key, "b"))
       {
         sprintf (&config[strlen(config)],
-	         "%sb=%i", config[0]?",":"", atoi(value));
+                 "%sb=%i", config[0]?",":"", atoi(value));
       }
       else if (!strcmp (key, "channels") ||  !strcmp (key, "c"))
       {
         sprintf (&config[strlen(config)],
-	         "%sc=%i", config[0]?",":"", atoi(value));
+                 "%sc=%i", config[0]?",":"", atoi(value));
       }
       else if (!strcmp (key, "type") ||  !strcmp (key, "T"))
       {
-	if (!strcmp (value, "u")  ||
-	    !strcmp (value, "ulaw"))
-	{
+        if (!strcmp (value, "u")  ||
+            !strcmp (value, "ulaw"))
+        {
           sprintf (&config[strlen(config)], "%sT=u", config[0]?",":"");
-	}
-	else if (!strcmp (value, "s")  ||
-	         !strcmp (value, "signed"))
-	{
+        }
+        else if (!strcmp (value, "s")  ||
+                 !strcmp (value, "signed"))
+        {
           sprintf (&config[strlen(config)], "%sT=s", config[0]?",":"");
-	}
-	else if (!strcmp (value, "f")  ||
-	         !strcmp (value, "float"))
-	{
+        }
+        else if (!strcmp (value, "f")  ||
+                 !strcmp (value, "float"))
+        {
           sprintf (&config[strlen(config)], "%sT=f", config[0]?",":"");
-	}
+        }
       }
       else if (!strcmp (key, "encoding") || !strcmp (key, "e"))
       {
-	if (!strcmp (value, "a")  ||
-	    !strcmp (value, "ascii85"))
-	{
+        if (!strcmp (value, "a")  ||
+            !strcmp (value, "ascii85"))
+        {
           sprintf (&config[strlen(config)], "%se=a", config[0]?",":"");
-	}
-	else if (!strcmp (value, "b")  ||
-	         !strcmp (value, "base64"))
-	{
+        }
+        else if (!strcmp (value, "b")  ||
+                 !strcmp (value, "base64"))
+        {
           sprintf (&config[strlen(config)], "%se=b", config[0]?",":"");
-	}
-	else
-	{
+        }
+        else
+        {
           sprintf (&config[strlen(config)], "%se=0", config[0]?",":"");
-	}
+        }
       }
       else if (!strcmp (key, "compression") || !strcmp (key, "o"))
       {
-	if (!strcmp (value, "opus")||
-	    !strcmp (value, "o"))
-	{
+        if (!strcmp (value, "opus")||
+            !strcmp (value, "o"))
+        {
           sprintf (&config[strlen(config)], "%so=o", config[0]?",":"");
-	}
-	else if (!strcmp (value, "deflate")||
-	         !strcmp (value, "z"))
-	{
+        }
+        else if (!strcmp (value, "deflate")||
+                 !strcmp (value, "z"))
+        {
           sprintf (&config[strlen(config)], "%so=z", config[0]?",":"");
-	}
-	else
-	{
+        }
+        else
+        {
           sprintf (&config[strlen(config)], "%so=0", config[0]?",":"");
-	}
+        }
       }
       free (key);
     }
@@ -507,31 +507,31 @@ int main (int argc, char **argv)
     {
       if (!strcmp (argv[i], "status"))
       {
-	action = ACTION_STATUS;
+        action = ACTION_STATUS;
       }
       else if (!strcmp (argv[i], "reset"))
       {
-	action = ACTION_RESET;
+        action = ACTION_RESET;
       }
       else if (!strcmp (argv[i], "mic"))
       {
-	action = ACTION_MIC;
+        action = ACTION_MIC;
       }
       else if (!strcmp (argv[i], "engine"))
       {
-	action = ACTION_ENGINE;
+        action = ACTION_ENGINE;
       }
       else if (!strcmp (argv[i], "speaker"))
       {
-	action = ACTION_SPEAKER;
+        action = ACTION_SPEAKER;
       }
       else if (!strcmp (argv[i], "--help"))
       {
         _nc_noraw();
-	printf ("Usage: atty [mic|speaker] key1=value key2=value\n");
-	printf ("\n");
-	printf ("Run atty alone to activate - or show status\n");
-	return 0;
+        printf ("Usage: atty [mic|speaker] key1=value key2=value\n");
+        printf ("\n");
+        printf ("Run atty alone to activate - or show status\n");
+        return 0;
       }
     }
   }
@@ -552,7 +552,7 @@ int main (int argc, char **argv)
 
       if (atty_readconfig () == 0)
       {
-	 return atty_engine ();
+         return atty_engine ();
       }
       atty_status ();
       break;
@@ -699,7 +699,7 @@ int vt_a85len (const char *src, int count)
     {
       if (k % 5 == 4)
       {
-	out_len += 4;
+        out_len += 4;
       }
     }
   }
@@ -745,41 +745,40 @@ static int iterate (int timeoutms)
     {
       if (buf[0] == '\e')
       {
-	in_audio_data = 2;
+        in_audio_data = 2;
       }
       else if (buf[0] == '\\' &&
-	       in_audio_data == 2)
+               in_audio_data == 2)
       {
-	if (encoding == 'a')
-	{
+        if (encoding == 'a')
+        {
           char *temp = malloc (vt_a85len (audio_packet, audio_packet_pos));
-	  int len = vt_a85dec (audio_packet, temp, audio_packet_pos);
-	  fwrite (temp, 1, len, stdout);
-	  fflush (stdout);
-	  free (temp);
-	}
-	else
-	if (encoding == 'b')
-	{
+          int len = vt_a85dec (audio_packet, temp, audio_packet_pos);
+          fwrite (temp, 1, len, stdout);
+          fflush (stdout);
+          free (temp);
+        }
+        else if (encoding == 'b')
+        {
           uint8_t *temp = malloc (audio_packet_pos);
-	  int len = audio_packet_pos;
-	  vt_base642bin (audio_packet,
+          int len = audio_packet_pos;
+          vt_base642bin (audio_packet,
                   &len,
                   temp);
-	  fwrite (temp, 1, len, stdout);
-	  fflush (stdout);
-	  free (temp);
-	}
+          fwrite (temp, 1, len, stdout);
+          fflush (stdout);
+          free (temp);
+        }
 
         audio_packet_pos = 0;
-	in_audio_data = 0;
-	return 1;
+        in_audio_data = 0;
+        return 1;
       }
       else
       {
-	in_audio_data = 1;
+        in_audio_data = 1;
         audio_packet[audio_packet_pos++] = buf[0];
-	if (audio_packet_pos > 65535) audio_packet_pos = 65535;
+        if (audio_packet_pos > 65535) audio_packet_pos = 65535;
       }
     }
     return 1;
@@ -792,15 +791,15 @@ static int iterate (int timeoutms)
          {
            return 0;
          }
-	 else if (!strncmp ((void*)buf, "\033_A", MIN(length+1,3)))
+         else if (!strncmp ((void*)buf, "\033_A", MIN(length+1,3)))
          {
            int semis = 0;
            while (semis < 1 && read (STDIN_FILENO, &buf[0], 1) != -1)
-	   {
-	     if (buf[0] == ';') semis ++;
-	   }
-	   in_audio_data = 1;
-	   return 1;
+           {
+             if (buf[0] == ';') semis ++;
+           }
+           in_audio_data = 1;
+           return 1;
          }
       }
   return 1;
@@ -959,8 +958,8 @@ signal_child (int signum)
       if (pid == vt_child)
       {
         _nc_noraw ();
-	printf ("\n");
-	exit(0);
+        printf ("\n");
+        exit(0);
         do_quit = 1;
         return;
       }
@@ -1148,8 +1147,8 @@ int ctx_vt_poll (MrgVT *vt, int timeout)
 
   read_size = MIN(read_size, remaining_chars);
   while (timeout > 100 &&
-	 remaining_chars > 0 &&
-	 vt_waitdata (vt, timeout))
+         remaining_chars > 0 &&
+         vt_waitdata (vt, timeout))
   {
     len = vt_read (vt, buf, read_size);
     for (int i = 0; i < len; i++)
@@ -1347,29 +1346,29 @@ static void vt_state_osc (MrgVT *vt, int byte)
           switch (n)
           {
           case 0:
-	    if (vt->title) free (vt->title);
-	    vt->title = strdup (vt->argument_buf + 3);
+            if (vt->title) free (vt->title);
+            vt->title = strdup (vt->argument_buf + 3);
 
             if (byte == 27)
               vt->state = vt_state_swallow;
             else
               vt->state = vt_state_neutral;
             update_title (vt);
-	    return;
+            return;
           default:
-	    printf ("\e%s", vt->argument_buf);
+            printf ("\e%s", vt->argument_buf);
             break;
           }
         if (byte == 27)
-	{
-	  vt->state = vt_state_swallow;
-	  printf ("\e\\");
-	}
+        {
+          vt->state = vt_state_swallow;
+          printf ("\e\\");
+        }
         else
-	{
-	  vt->state = vt_state_neutral;
-	  printf ("%c", byte);
-	}
+        {
+          vt->state = vt_state_neutral;
+          printf ("%c", byte);
+        }
       }
       else
       {
