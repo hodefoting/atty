@@ -140,7 +140,7 @@ void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes)
     int z_result = compress (data, &len, samples, len);
     if (z_result != Z_OK)
     {
-      char buf[256]= "\e_Ao=z;zlib error\e\\";
+      char buf[256]= "\e_Ao=z;zlib error2\e\\";
       vt_write (vt, buf, strlen(buf));
       data = samples;
     }
@@ -1205,6 +1205,7 @@ void vt_audio (MrgVT *vt, const char *command)
   int  value;
   int  pos = 1;
 
+  audio->frames=0;
   audio->action='t';
 
   int configure = 0;
@@ -1326,6 +1327,7 @@ void vt_audio (MrgVT *vt, const char *command)
      audio->data[audio->data_size]=0;
   }
 
+    if (audio->frames)
     switch (audio->encoding)
     {
       case 'y':
@@ -1336,13 +1338,13 @@ void vt_audio (MrgVT *vt, const char *command)
         int bin_length = audio->data_size;
         if (bin_length)
         {
-        uint8_t *data2 = malloc ((unsigned int)vt_a85len ((char*)audio->data, audio->data_size));
+        uint8_t *data2 = malloc ((unsigned int)vt_a85len ((char*)audio->data, audio->data_size) + 1);
         bin_length = vt_a85dec ((char*)audio->data,
                                 (void*)data2,
                                 bin_length);
-        memcpy (audio->data, data2, bin_length + 1);
+        free (audio->data);
+        audio->data = data2;
         audio->data_size = bin_length;
-        free (data2);
         }
       }
       break;
@@ -1361,6 +1363,7 @@ void vt_audio (MrgVT *vt, const char *command)
       break;
     }
 
+    if (audio->frames)
     switch (audio->compression)
     {
       case 'z':
@@ -1368,19 +1371,27 @@ void vt_audio (MrgVT *vt, const char *command)
             // XXX  :  relying on user provided input on size here
             //         look into making this safer
             //vt->gfx.buf_size)
-      unsigned long actual_uncompressed_size = audio->frames * audio->bits/8 * audio->channels;
+      unsigned long actual_uncompressed_size = audio->frames * audio->bits/8 * audio->channels + 512;
       unsigned char *data2 = malloc (actual_uncompressed_size);
       /* if a buf size is set (rather compression, but
        * this works first..) then */
       int z_result = uncompress (data2, &actual_uncompressed_size,
                                  audio->data,
                                  audio->data_size);
+#if 0
+      // XXX : we seem to get buf-error (-5) here, which indicates not enough
+      //       space in output buffer, which is odd
+      //
+      //       it is non fatal though so we ignore it and use the validly
+      //       decompressed bits.
       if (z_result != Z_OK)
       {
-        char buf[256]= "\e_Ao=z;zlib error\e\\";
+        char buf[256];
+        sprintf (buf, "\e_Ao=z;zlib error1 %i\e\\", z_result);
         vt_write (vt, buf, strlen(buf));
-        goto cleanup;
+        //goto cleanup;
       }
+#endif
       free (audio->data);
       audio->data = data2;
       audio->data_size = actual_uncompressed_size;
@@ -1496,7 +1507,8 @@ void vt_audio (MrgVT *vt, const char *command)
          char buf[512];
          sprintf (buf, "\e_As=%i,b=%i,c=%i,T=%c,e=%c,o=%c;OK\e\\",
       audio->samplerate, audio->bits, audio->channels,
-      audio->type, audio->encoding, audio->compression
+      audio->type, audio->encoding?audio->encoding:'0',
+      audio->compression?audio->compression:'0'
       /*audio->transmission*/);
 
          vt_write (vt, buf, strlen(buf));

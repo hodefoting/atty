@@ -232,13 +232,10 @@ const char *terminal_response(void)
 
   while (has_data (tty_fd, 200) && len < BUFSIZ - 2)
   {
-    if (read (tty_fd, &buf[len++], (size_t)1) == 1)
-    {
-       //fprintf (stderr, "uh\n");
-    }
+    read (tty_fd, &buf[len++], (size_t)1);
   }
+  if (len > 0)
   buf[--len] = 0;
-  //close (tty);
   return buf;
 }
 
@@ -264,6 +261,7 @@ int atty_readconfig (void)
      fflush (NULL);
      exit (-1);
     }
+    //fprintf (stderr, "[%s]\n", ret+2);
     if (strstr (ret, "s="))
     {
       sample_rate = atoi (strstr (ret, "s=")+2);
@@ -326,6 +324,8 @@ void atty_status (void)
   switch (encoding)
   {
     default:
+        fprintf (stdout, "encoding=%c ", encoding);
+        break;
     case '0':
         fprintf (stdout, "encoding=none ");
         break;
@@ -374,6 +374,7 @@ void atty_speaker (void)
     lost_end = atty_ticks();
     lost_time = (lost_end - lost_start);
     buffered_samples -= (sample_rate * lost_time / 1000);
+
     if (buffered_samples < 0)
       buffered_samples = 0;
 
@@ -384,10 +385,11 @@ void atty_speaker (void)
 
       if (compression == 'z')
       {
-        int z_result = compress (audio_packet_z, &encoded_len, data, encoded_len);
+        int z_result = compress (audio_packet_z, &encoded_len,
+                                 data, encoded_len);
         if (z_result != Z_OK)
         {
-          printf ("\e_Ao=z;zlib error\e\\");
+          printf ("\e_Ao=z;zlib error-\e\\");
           continue;
         }
         else
@@ -709,7 +711,7 @@ int vt_a85len (const char *src, int count)
     out_len += 4;
     out_len -= (5-k);
   }
-  return out_len;
+  return out_len + 10; // XXX redo a85len, a85dec seems to decode more
 }
 
 
@@ -719,6 +721,7 @@ static int in_audio_data = 0;
 
 static char audio_packet[65536];
 static int audio_packet_pos = 0;
+static int frames = 0;
 
 static int iterate (int timeoutms)
 {
@@ -752,11 +755,31 @@ static int iterate (int timeoutms)
       {
         if (encoding == 'a')
         {
-          char *temp = malloc (vt_a85len (audio_packet, audio_packet_pos));
-          int len = vt_a85dec (audio_packet, temp, audio_packet_pos);
-          fwrite (temp, 1, len, stdout);
-          fflush (stdout);
-          free (temp);
+                    //fprintf (stderr, "!!!!\n");
+          unsigned char *temp = malloc (vt_a85len (audio_packet, audio_packet_pos));
+          int len = vt_a85dec (audio_packet, (char*)temp, audio_packet_pos);
+
+          if (compression == 'z')
+          {
+            unsigned long actual_uncompressed_size = frames * bits/8 * channels;
+            unsigned char *data2 = malloc (actual_uncompressed_size);
+      /* if a buf size is set (rather compression, but
+       * this works first..) then */
+            int z_result = uncompress (data2, &actual_uncompressed_size,
+                                 temp, len);
+            if (z_result == Z_OK)
+            {
+              fwrite (data2, 1, actual_uncompressed_size, stdout);
+            }
+            free (data2);
+          }
+          else
+          {
+            fwrite (temp, 1, len, stdout);
+          }
+
+            fflush (stdout);
+            free (temp);
         }
         else if (encoding == 'b')
         {
@@ -794,6 +817,10 @@ static int iterate (int timeoutms)
          else if (!strncmp ((void*)buf, "\033_A", MIN(length+1,3)))
          {
            int semis = 0;
+           frames = 0;
+           if (strstr ((char*)buf, "f="))
+             frames = atoi (strstr ((char*)buf, "f=")+2);
+
            while (semis < 1 && read (STDIN_FILENO, &buf[0], 1) != -1)
            {
              if (buf[0] == ';') semis ++;
@@ -1324,7 +1351,7 @@ static void update_title (MrgVT *vt)
   }
   else
   {
-    printf ("\e]0;atty|");
+    printf ("\e]0;atty %c%c|", vt->audio.encoding, vt->audio.compression);
   }
   printf ("%s\e\\", vt->title?vt->title:"");
   last_title_mic = vt->audio.mic;
