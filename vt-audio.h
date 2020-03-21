@@ -130,27 +130,44 @@ void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes)
 {
   char buf[256];
   AudioState *audio = &vt->audio;
+  uint8_t *data = samples;
   int frames = bytes / (audio->bits/8) / audio->channels;
-  sprintf (buf, "\e[_Af=%i;", frames);
-  vt_write (vt, buf, strlen (buf));
 
   if (audio->compression == 'z')
   {
-    // compress
+    uLongf len = compressBound(bytes);
+    data = malloc (len);
+    int z_result = compress (data, &len, samples, len);
+    if (z_result != Z_OK)
+    {
+      char buf[256]= "\e_Ao=z;zlib error\e\\";
+      vt_write (vt, buf, strlen(buf));
+      data = samples;
+    }
+    else
+    {
+      bytes = len;
+    }
   }
 
   char *encoded = malloc (bytes * 2);
   encoded[0]=0;
   if (audio->encoding == 'a')
   {
-    vt_a85enc (samples, encoded, bytes);
+    vt_a85enc (data, encoded, bytes);
   }
   else /* if (audio->encoding == 'b')  */
   {
-    vt_bin2base64 (samples, bytes, encoded);
+    vt_bin2base64 (data, bytes, encoded);
   }
+
+  sprintf (buf, "\e[_Af=%i;", frames);
+  vt_write (vt, buf, strlen (buf));
   vt_write (vt, encoded, strlen(encoded));
   free (encoded);
+
+  if (data != samples)
+    free (data);
 
   //vt_write (vt, samples, bytes);
   buf[0]='\e';
