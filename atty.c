@@ -355,8 +355,10 @@ void atty_status (void)
 void atty_mic (void);
 void atty_speaker (void)
 {
-  char audio_packet[4096 * 4];
-  char audio_packet_a85[4096 * 8];
+  uint8_t audio_packet[4096 * 4];
+  uint8_t audio_packet_z[4096 * 4];
+  uint8_t audio_packet_a85[4096 * 8];
+  uint8_t *data = NULL;
   int  len = 0;
 
   signal (SIGINT, signal_int_speaker);
@@ -377,11 +379,36 @@ void atty_speaker (void)
 
     if (len >  buffer_samples)
     {
-      fprintf (stdout, "\033_Af=%i;", len / channels / (bits/8));
+      uLongf encoded_len = sizeof (audio_packet_z);
+      data = audio_packet;
 
-      int new_len = vt_a85enc (audio_packet, audio_packet_a85, len);
-      audio_packet_a85[new_len]=0;
-      fwrite (audio_packet_a85, 1, strlen (audio_packet_a85), stdout);
+      if (compression == 'z')
+      {
+        int z_result = compress (audio_packet_z, &encoded_len, data, encoded_len);
+        if (z_result != Z_OK)
+        {
+          printf ("\e_Ao=z;zlib error\e\\");
+	  continue;
+        }
+        else
+        {
+          data = audio_packet_z;
+        }
+      }
+
+      if (encoding == 'a')
+      {
+        int new_len = vt_a85enc (data, (char*)audio_packet_a85, encoded_len);
+        audio_packet_a85[new_len]=0;
+        data = audio_packet_a85;
+      }
+      if (encoding == 'b')
+      {
+	// TODO
+      }
+
+      fprintf (stdout, "\033_Af=%i;", len / channels / (bits/8));
+      fwrite (data, 1, strlen ((char*)data), stdout);
       fwrite ("\e\\", 1, 2, stdout);
       fflush (stdout);
       usleep (1000 * ( len * 1000 / sample_rate - (atty_ticks()-lost_end)) );
