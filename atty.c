@@ -441,7 +441,7 @@ void atty_speaker (void)
 static void test_a85 (void)
 {
   char *tests[]={"foo", "foo0", "foo012", "foo0123", "foo01234", "foo012345", NULL};
-  char *ref[]={"AoDS~>", "AoDTA~>", "AoDTA0er~>", "AoDTA0etN~>", "AoDTA0etOA~>", "AoDTA0etOA2#~>", NULL};
+  char *ref[]={"AoDS~", "AoDTA~", "AoDTA0er~", "AoDTA0etN~", "AoDTA0etOA~", "AoDTA0etOA2#~", NULL};
 
   for (int i =0; tests[i];i++)
   {
@@ -450,8 +450,8 @@ static void test_a85 (void)
      vt_a85enc (tests[i], encoded, strlen(tests[i]));
      vt_a85dec (encoded, decoded, strlen(encoded));
 
-     //if (strcmp (tests[i], decoded))
-     if (strcmp (ref[i], encoded))
+     if (strcmp (tests[i], decoded) ||
+         strcmp (ref[i], encoded))
      {
        printf ("  %i: [%s]\n", i, tests[i]);
        printf ("  d: [%s]\n", decoded);
@@ -470,6 +470,7 @@ static void test_a85 (void)
 
 int main (int argc, char **argv)
 {
+// test_a85();
   char path[512];
   sprintf (path, "/proc/%d/fd/1", getppid());
   tty_fd = open (path, O_RDWR);
@@ -622,22 +623,6 @@ int main (int argc, char **argv)
   return 0;
 }
 
-
-static char a85_alphabet[]=
-{
-'!','"','#','$','%','&','\'','(',')','*',
-'+',',','-','.','/','0','1','2','3','4',
-'5','6','7','8','9',':',';','<','=','>',
-'?','@','A','B','C','D','E','F','G','H',
-'I','J','K','L','M','N','O','P','Q','R',
-'S','T','U','V','W','X','Y','Z','[','\\',
-']','^','_','`','a','b','c','d','e','f',
-'g','h','i','j','k','l','m','n','o','p',
-'q','r','s','t','u'
-};
-
-static char a85_decoder[256]="";
-
 int vt_a85enc (const void *srcp, char *dst, int count)
 {
   const uint8_t *src = srcp;
@@ -665,7 +650,7 @@ int vt_a85enc (const void *srcp, char *dst, int count)
     {
       for (int j = 0; j < 5; j++)
       {
-        dst[out_len++] = a85_alphabet[(input / divisor) % 85];
+        dst[out_len++] = ((input / divisor) % 85) + '!';
         divisor /= 85;
       }
     }
@@ -674,20 +659,12 @@ int vt_a85enc (const void *srcp, char *dst, int count)
   out_len -= padding;
 
   dst[out_len++]='~';
-  dst[out_len++]='>';
   dst[out_len]=0;
   return out_len;
 }
 
 int vt_a85dec (const char *src, char *dst, int count)
 {
-  if (a85_decoder[0] == 0)
-  {
-    for (int i = 0; i < 85; i++)
-    {
-      a85_decoder[(int)a85_alphabet[i]]=i;
-    }
-  }
   int out_len = 0;
   uint32_t val = 0;
   int k = 0;
@@ -706,7 +683,7 @@ int vt_a85dec (const char *src, char *dst, int count)
     }
     else
     {
-      val += a85_decoder[(int)src[i]];
+      val += src[i]-'!';
       if (k % 5 == 4)
       {
          for (int j = 0; j < 4; j++)
@@ -721,11 +698,14 @@ int vt_a85dec (const char *src, char *dst, int count)
   k = k % 5;
   if (k)
   {
+    val += 84;
+#if 1
     for (int j = k; j < 4; j++)
     {
-      val += 84;
       val *= 85;
+      val += 84;
     }
+#endif
 
     for (int j = 0; j < k-1; j++)
     {
@@ -1416,7 +1396,7 @@ static void update_title (MrgVT *vt)
   }
   else
   {
-    printf ("\e]0;atty %c%c|", vt->audio.encoding, vt->audio.compression);
+    printf ("\e]0;atty|");
   }
   printf ("%s\e\\", vt->title?vt->title:"");
   last_title_mic = vt->audio.mic;

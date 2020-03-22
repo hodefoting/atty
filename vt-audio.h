@@ -334,8 +334,8 @@ static void audio_task (MrgVT *vt, int click)
          spec_want.channels = audio->channels;
        }
 
-       /* XXX  override it always use s16 stereo as output,
-        *      and do our own conversions to that
+       /* In SDL we always set 16bit stereo, but with the
+        * requested sample rate.
         */
       spec_want.format = AUDIO_S16;
       spec_want.channels = 2;
@@ -1288,8 +1288,8 @@ void vt_audio (MrgVT *vt, const char *command)
       if (audio->bits != 8 && audio->bits != 16)
         audio->bits = 8;
 
-      if (audio->buffer_size > 20480)
-        audio->buffer_size = 20480;
+      if (audio->buffer_size > 2048)
+        audio->buffer_size = 2048;
       else if (audio->buffer_size < 512)
         audio->buffer_size = 512;
 
