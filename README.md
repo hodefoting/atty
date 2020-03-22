@@ -66,7 +66,7 @@ e=a      encoding     a = ascii85 b = base64
 o=0      compression  z = deflate(zlib) o = opus  0 = none
 
 To change the settings to 48000hz, 16bit stereo the following would be issued,
-compression is not yet supported.
+only z-lib compression is supported at the moment.
 
 [ESC]_As=48000,b=16,c=2,T=s;[ESC]\
 
@@ -100,7 +100,7 @@ Possible future plans
 
 Prompt operator to acknowledge use of microphone (blink terminal, and show message in titlebar and hijack keypresses until either y or n.
 
-Add support for zlib and opus as compression methods for the payload.
+Add support for using opus as codec in addition to zlib for compressing the payload.
 
 Split configuration of microphone/speaker?
 

@@ -582,7 +582,6 @@ int main (int argc, char **argv)
       fflush (NULL);
       /*  fallthrough */
     case ACTION_STATUS:
-
       if (atty_readconfig () == 0)
       {
          return atty_engine ();
@@ -797,14 +796,16 @@ static int iterate (int timeoutms)
 
           if (compression == 'z')
           {
-            unsigned long actual_uncompressed_size = frames * bits/8 * channels;
+            unsigned long actual_uncompressed_size = frames * bits/8 * channels + 16;
             unsigned char *data2 = malloc (actual_uncompressed_size);
       /* if a buf size is set (rather compression, but
        * this works first..) then */
             int z_result = uncompress (data2, &actual_uncompressed_size,
                                  temp, len);
-            if (z_result == Z_OK)
+            if (z_result == Z_OK || z_result == Z_BUF_ERROR)
             {
+              if (z_result != Z_OK)
+                 fprintf (stderr, "[[z error:%i %i]]", __LINE__, z_result);
               fwrite (data2, 1, actual_uncompressed_size, stdout);
             }
             free (data2);
@@ -856,7 +857,6 @@ static int iterate (int timeoutms)
            int tmpl=0;
            int semis = 0;
            frames = 0;
-           
 
            while (semis < 1 && read (STDIN_FILENO, &buf[0], 1) != -1)
            {
@@ -866,7 +866,9 @@ static int iterate (int timeoutms)
              if (buf[0] == ';') semis ++;
            }
            if (strstr ((char*)tmp, "f="))
+           {
              frames = atoi (strstr ((char*)tmp, "f=")+2);
+           }
            in_audio_data = 1;
            return 1;
          }

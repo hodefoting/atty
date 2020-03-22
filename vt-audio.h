@@ -1368,9 +1368,6 @@ void vt_audio (MrgVT *vt, const char *command)
     {
       case 'z':
     {
-            // XXX  :  relying on user provided input on size here
-            //         look into making this safer
-            //vt->gfx.buf_size)
       unsigned long actual_uncompressed_size = audio->frames * audio->bits/8 * audio->channels + 512;
       unsigned char *data2 = malloc (actual_uncompressed_size);
       /* if a buf size is set (rather compression, but
@@ -1378,14 +1375,17 @@ void vt_audio (MrgVT *vt, const char *command)
       int z_result = uncompress (data2, &actual_uncompressed_size,
                                  audio->data,
                                  audio->data_size);
-      if (z_result){};
+      if (z_result != Z_OK)
+      {
+       // fprintf (stderr, "[z error %i %i]", __LINE__, z_result);
+      }
+
 #if 0
       // XXX : we seem to get buf-error (-5) here, which indicates not enough
       //       space in output buffer, which is odd
       //
       //       it is non fatal though so we ignore it and use the validly
       //       decompressed bits.
-      if (z_result != Z_OK)
       {
         char buf[256];
         sprintf (buf, "\e_Ao=z;zlib error1 %i\e\\", z_result);
