@@ -231,7 +231,7 @@ const char *terminal_response(void)
   int len = 0;
   fflush (stdout);
 
-  while (has_data (tty_fd, 200) && len < BUFSIZ - 2)
+  while (has_data (tty_fd, 500) && len < BUFSIZ - 2)
   {
     read (tty_fd, &buf[len++], (size_t)1);
   }
