@@ -5,13 +5,15 @@ A protocol extending ECMA-48 based terminals like xterm, linux console,
 gnome-terminal and more with audio playback and capture.
 
 Atty provides in a single binary commandline tools to configure and simplify
-use of a complying terminal; this binary also provides a wrapper implementation
-that you can run in any linux terminal to bridge the escape sequences to
-audio hardware abstracted by SDL, it might possible even work on OSX.
+use of a complying terminal; this binary also provides a "filter-terminal"
+similar to screen or tmux; that augments the terminal you run it in with audop
+capabilities.  Thus all linux terminals, including the console gets audio -
+since atty uses SDL2 for audio-output, this might even work on OSX.
 
 Chunks of audio are transmitted in base64 or ascii85 encoding as APC escape
 sequences. With the default settings this brings back the sunaudio device for
-use in terminal applications
+use in terminal applications at 8000 hz mono 8bit ulaw, this is the baseline
+settings, 16bit support is only partially functional at the moment.
 
 Some example commandlines:
 
@@ -21,8 +23,7 @@ or
 
 $ atty status
 
-print, current audio configuration - and make a test sound,
-possibly enable audio for shell
+initialize, or print current audio settings.
 
 $ atty samplerate=48000 bits=16 type=signed
 
@@ -39,6 +40,9 @@ $ atty speaker < recording
 
 Will play back the same file.
 
+$ ffmpeg -i input.mp3 -ac 1 -ar 8000 -acodec pcm_mulaw -f au - | ./atty speaker
+
+Will use ffmpeg to decode and play back a file on the fly.
 
 Protocol
 --------
@@ -96,8 +100,8 @@ request.)
 Recording uses the same settings as playback, passing the value 1 to
 the key 'm' turns on recording, and 0 turns it off.
 
-Possible future plans
----------------------
+Future plans
+------------
 
 Prompt operator to acknowledge use of microphone (blink terminal, and show message in titlebar and hijack keypresses until either y or n.
 
