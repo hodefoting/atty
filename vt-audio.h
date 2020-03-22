@@ -176,7 +176,7 @@ void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes)
   vt_write (vt, buf, 2);
 }
 
-#define MIC_BUF_LEN 8192
+#define MIC_BUF_LEN 40960
 
 uint8_t mic_buf[MIC_BUF_LEN];
 int     mic_buf_pos = 0;
@@ -273,8 +273,7 @@ static void audio_task (MrgVT *vt, int click)
       spec_want.freq     = audio->samplerate;
       spec_want.channels = 1;
       spec_want.format   = AUDIO_S16;
-      //spec_want.samples  = AUDIO_CHUNK_SIZE;
-      spec_want.samples = audio->buffer_size;
+      spec_want.samples  = audio->buffer_size;
       spec_want.callback = mic_callback;
       spec_want.userdata = audio;
       mic_device = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(0, SDL_TRUE), 1, &spec_want, &spec_got, 0);
@@ -343,7 +342,6 @@ static void audio_task (MrgVT *vt, int click)
 
       spec_want.samples = audio->buffer_size;
       spec_want.callback = NULL;
-
 
       speaker_device = SDL_OpenAudioDevice (NULL, 0, &spec_want, &spec_got, 0);
       if (!speaker_device){

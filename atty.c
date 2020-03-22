@@ -1170,13 +1170,13 @@ static void ctx_vt_run_command (MrgVT *vt, const char *command)
 
 static void vtcmd_reset_to_initial_state (MrgVT *vt, const char *sequence)
 {
-  vt->audio.bits = 8;
-  vt->audio.channels = 1;
-  vt->audio.type = 'u';
-  vt->audio.samplerate = 8000;
-  vt->audio.encoding = 'a';
+  vt->audio.bits        = 8;
+  vt->audio.channels    = 1;
+  vt->audio.type        = 'u';
+  vt->audio.samplerate  = 8000;
+  vt->audio.encoding    = 'a';
   vt->audio.compression = '0';
-  vt->audio.mic = 0;
+  vt->audio.mic         = 0;
 }
 
 
