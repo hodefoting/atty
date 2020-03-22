@@ -1378,6 +1378,7 @@ void vt_audio (MrgVT *vt, const char *command)
       int z_result = uncompress (data2, &actual_uncompressed_size,
                                  audio->data,
                                  audio->data_size);
+      if (z_result){};
 #if 0
       // XXX : we seem to get buf-error (-5) here, which indicates not enough
       //       space in output buffer, which is odd
@@ -1517,7 +1518,7 @@ void vt_audio (MrgVT *vt, const char *command)
   }
   }
 
-cleanup:
+//cleanup:
     if (audio->data)
       free (audio->data);
     audio->data = NULL;

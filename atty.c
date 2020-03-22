@@ -421,6 +421,37 @@ void atty_speaker (void)
 }
 
 
+#if 0
+static void test_a85 (void)
+{
+  char *tests[]={"foo", "foo0", "foo012", "foo0123", "foo01234", "foo012345", NULL};
+  char *ref[]={"AoDS~>", "AoDTA~>", "AoDTA0er~>", "AoDTA0etN~>", "AoDTA0etOA~>", "AoDTA0etOA2#~>", NULL};
+
+  for (int i =0; tests[i];i++)
+  {
+     char encoded[256];
+     char decoded[256];
+     vt_a85enc (tests[i], encoded, strlen(tests[i]));
+     vt_a85dec (encoded, decoded, strlen(encoded));
+
+     //if (strcmp (tests[i], decoded))
+     if (strcmp (ref[i], encoded))
+     {
+       printf ("  %i: [%s]\n", i, tests[i]);
+       printf ("  d: [%s]\n", decoded);
+       printf ("  e: [%s]\n", encoded);
+       printf ("  r: [%s]\n", ref[i]);
+     }
+     else
+     {
+       printf ("OK %i\n", i);
+     }
+  }
+  exit (0);
+}
+#endif
+
+
 int main (int argc, char **argv)
 {
   char path[512];
@@ -591,14 +622,17 @@ int vt_a85enc (const void *srcp, char *dst, int count)
 {
   const uint8_t *src = srcp;
   int out_len = 0;
-  int padding = 4 - (count % 4);
+
+  int padding = 4-(count % 4);
+  if (padding == 4) padding = 0;
+
   for (int i = 0; i < (count+3)/4; i ++)
   {
     uint32_t input = 0;
     for (int j = 0; j < 4; j++)
     {
       input = (input << 8);
-      if (i*4+j<count)
+      if (i*4+j<=count)
         input += src[i*4+j];
     }
 
@@ -616,7 +650,9 @@ int vt_a85enc (const void *srcp, char *dst, int count)
       }
     }
   }
+
   out_len -= padding;
+
   dst[out_len++]='~';
   dst[out_len++]='>';
   dst[out_len]=0;
@@ -671,13 +707,13 @@ int vt_a85dec (const char *src, char *dst, int count)
       val *= 85;
     }
 
-    for (int j = 0; j < 4; j++)
+    for (int j = 0; j < k-1; j++)
     {
       dst[out_len++] = (val & (0xff << 24)) >> 24;
       val <<= 8;
     }
     val = 0;
-    out_len -= (5-k);
+  //  out_len -= (5-k);
   }
   dst[out_len]=0;
   return out_len;
@@ -778,8 +814,8 @@ static int iterate (int timeoutms)
             fwrite (temp, 1, len, stdout);
           }
 
-            fflush (stdout);
-            free (temp);
+          fflush (stdout);
+          free (temp);
         }
         else if (encoding == 'b')
         {
@@ -816,15 +852,21 @@ static int iterate (int timeoutms)
          }
          else if (!strncmp ((void*)buf, "\033_A", MIN(length+1,3)))
          {
+           char tmp[40];
+           int tmpl=0;
            int semis = 0;
            frames = 0;
-           if (strstr ((char*)buf, "f="))
-             frames = atoi (strstr ((char*)buf, "f=")+2);
+           
 
            while (semis < 1 && read (STDIN_FILENO, &buf[0], 1) != -1)
            {
+             tmp[tmpl++]=buf[0];
+             if (tmpl>=40)tmpl=39;
+             tmp[tmpl]=0;
              if (buf[0] == ';') semis ++;
            }
+           if (strstr ((char*)tmp, "f="))
+             frames = atoi (strstr ((char*)tmp, "f=")+2);
            in_audio_data = 1;
            return 1;
          }
