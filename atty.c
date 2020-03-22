@@ -188,7 +188,7 @@ signal_int_mic (int signum)
   exit (0);
 }
 
-int buffered_samples = 0;
+int buffered_bytes = 0;
 int sample_rate = 8000;
 int bits = 8;
 int buffer_size = 512;
@@ -366,6 +366,8 @@ void atty_speaker (void)
   uint8_t *data = NULL;
   int  len = 0;
 
+  int byte_rate = sample_rate * bits/8 * channels;
+
   signal (SIGINT, signal_int_speaker);
   signal (SIGTERM, signal_int_speaker);
   atexit (at_exit_speaker);
@@ -377,11 +379,20 @@ void atty_speaker (void)
     audio_packet[len++]=buf[0];
 
     lost_end = atty_ticks();
-    lost_time = (lost_end - lost_start);
-    buffered_samples -= (sample_rate * lost_time / 1000);
+    lost_time += (lost_end - lost_start);
+    buffered_bytes -= (byte_rate * lost_time / 1000);
+    lost_time = 0;
 
-    if (buffered_samples < 0)
-      buffered_samples = 0;
+    if (buffered_bytes < 0)
+      buffered_bytes = 0;
+
+    if (buffered_bytes > buffer_size/2)
+    {
+      int wait_bytes = buffered_bytes - buffer_size/2;
+      usleep (wait_bytes * 1000 * 1000 / byte_rate);
+      buffered_bytes = buffer_size/2;
+    }
+    lost_start = atty_ticks ();
 
     if (len > buffer_size)
     {
@@ -418,10 +429,10 @@ void atty_speaker (void)
       fwrite (data, 1, strlen ((char*)data), stdout);
       fwrite ("\e\\", 1, 2, stdout);
       fflush (stdout);
-      usleep (1000 * ( len * 1000 / sample_rate - (atty_ticks()-lost_end)) );
+
+      buffered_bytes += len;
       len = 0;
     }
-    lost_start = atty_ticks ();
   }
 }
 

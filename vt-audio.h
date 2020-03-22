@@ -1490,8 +1490,8 @@ void vt_audio (MrgVT *vt, const char *command)
            {
              for (int i = 0; i < audio->frames; i++)
              {
-               int val_left = ((int16_t*)(audio->data))[i*2];
-               int val_right = ((int16_t*)(audio->data))[i*2+1];
+               int val_left = ((int16_t*)(audio->data))[i*4];
+               int val_right = ((int16_t*)(audio->data))[i*4+2];
                terminal_queue_pcm (val_left, val_right);
              }
            }
@@ -1499,7 +1499,7 @@ void vt_audio (MrgVT *vt, const char *command)
            {
              for (int i = 0; i < audio->frames; i++)
              {
-               int val = ((int16_t*)(audio->data))[i];
+               int val = ((int16_t*)(audio->data))[i*2];
                terminal_queue_pcm (val, val);
              }
            }
