@@ -54,12 +54,13 @@ This message format is used both for audio/configuration sent from the host
 Sending [ESC]_Aa=q;[ESC]\ sets the action key to q - for query. This queries
 the reply with the default atty settings is:
 
-[ESC]_As=8000,b=8,c=1,T=u,e=a,o=0;OK[ESC]\
+[ESC]_As=8000,B=1024,b=8,c=1,T=u,e=a,o=0;OK[ESC]\
 
 Breaking down these key/value pairs we get:
 
 s=8000   samplerate in hz
 b=8      bits per sample, 8 and 16 are valid
+B=1024   number of frames (each frame has channel number of samples)
 c=1      mono/interleaved stereo 1/2
 T=u      sample type, u = ulaw    s = signed
 e=a      encoding     a = ascii85 b = base64
@@ -107,4 +108,3 @@ Split configuration of microphone/speaker?
 To support the development of atty and dissimilar technologies; consider
 supporting the author at https://patreon.com/pippin and
 https://liberapay.com/pippin
-

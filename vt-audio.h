@@ -51,7 +51,7 @@ static int ydec (const void *srcp, void *dstp, int count)
 
 static SDL_AudioDeviceID speaker_device = 0;
 
-#define AUDIO_CHUNK_SIZE 512
+//#define AUDIO_CHUNK_SIZE 512
 
 // our pcm queue is currently always 16 bit
 // signed stereo
@@ -273,7 +273,8 @@ static void audio_task (MrgVT *vt, int click)
       spec_want.freq     = audio->samplerate;
       spec_want.channels = 1;
       spec_want.format   = AUDIO_S16;
-      spec_want.samples  = AUDIO_CHUNK_SIZE;
+      //spec_want.samples  = AUDIO_CHUNK_SIZE;
+      spec_want.samples = audio->buffer_size;
       spec_want.callback = mic_callback;
       spec_want.userdata = audio;
       mic_device = SDL_OpenAudioDevice(SDL_GetAudioDeviceName(0, SDL_TRUE), 1, &spec_want, &spec_got, 0);
@@ -299,7 +300,7 @@ static void audio_task (MrgVT *vt, int click)
     }
   }
 
-  int free_frames = AUDIO_CHUNK_SIZE - SDL_GetQueuedAudioSize(speaker_device);
+  int free_frames = audio->buffer_size - SDL_GetQueuedAudioSize(speaker_device);
   int queued = (pcm_write_pos - pcm_read_pos)/2;
   if (free_frames > 6) free_frames -= 4;
   int frames = queued;
@@ -340,7 +341,7 @@ static void audio_task (MrgVT *vt, int click)
       spec_want.format = AUDIO_S16;
       spec_want.channels = 2;
 
-      spec_want.samples = AUDIO_CHUNK_SIZE;
+      spec_want.samples = audio->buffer_size;
       spec_want.callback = NULL;
 
 
@@ -1234,6 +1235,7 @@ void vt_audio (MrgVT *vt, const char *command)
       {
         case 's':range="8000,16000,24000,48000";break;
         case 'b':range="8,16";break;
+        case 'B':range="512-65536";break;
         case 'c':range="1";break;
         case 'T':range="u,s,f";break;
         case 'e':range="b,a";break;
@@ -1250,6 +1252,7 @@ void vt_audio (MrgVT *vt, const char *command)
     {
       case 's': audio->samplerate = value; configure = 1; break;
       case 'b': audio->bits = value; configure = 1; break;
+      case 'B': audio->buffer_size = value; configure = 1; break;
       case 'c': audio->channels = value; configure = 1; break;
       case 'a': audio->action = value; configure = 1; break;
       case 'T': audio->type = value; configure = 1; break;
@@ -1286,6 +1289,11 @@ void vt_audio (MrgVT *vt, const char *command)
 
       if (audio->bits != 8 && audio->bits != 16)
         audio->bits = 8;
+
+      if (audio->buffer_size > 20480)
+        audio->buffer_size = 20480;
+      else if (audio->buffer_size < 512)
+        audio->buffer_size = 512;
 
       switch (audio->type)
       {
@@ -1506,9 +1514,10 @@ void vt_audio (MrgVT *vt, const char *command)
     case 'q': // query
        {
          char buf[512];
-         sprintf (buf, "\e_As=%i,b=%i,c=%i,T=%c,e=%c,o=%c;OK\e\\",
-      audio->samplerate, audio->bits, audio->channels,
-      audio->type, audio->encoding?audio->encoding:'0',
+         sprintf (buf, "\e_As=%i,b=%i,c=%i,T=%c,B=%i,e=%c,o=%c;OK\e\\",
+      audio->samplerate, audio->bits, audio->channels, audio->type,
+      audio->buffer_size,
+      audio->encoding?audio->encoding:'0',
       audio->compression?audio->compression:'0'
       /*audio->transmission*/);
 

@@ -57,7 +57,8 @@ typedef struct AudioState {
                   //    and if gotten, start streaming
                   //    audio packets in the incoming direction
   int encoding;   // 'a' ascci85 'b' base64
-  int compression; // unused for now, z zlib o opus
+  int compression; // z zlib o opus
+  int buffer_size;
 
   int frames;
 
@@ -190,12 +191,12 @@ signal_int_mic (int signum)
 int buffered_samples = 0;
 int sample_rate = 8000;
 int bits = 8;
+int buffer_size = 512;
 int channels = 1;
 int ulaw = 1;
 int compression = '0';
 int encoding = '0';
 int type = 'u';
-int buffer_samples = 512;
 int lost_time = 0;
 int lost_start;
 int lost_end;
@@ -274,6 +275,10 @@ int atty_readconfig (void)
     {
       bits = atoi (strstr (ret, "b=")+2);
     }
+    if (strstr (ret, "B="))
+    {
+      buffer_size = atoi (strstr (ret, "B=")+2);
+    }
     if (strstr (ret, "T="))
     {
       type = strstr (ret, "T=")[2];
@@ -301,54 +306,54 @@ int atty_readconfig (void)
 void atty_status (void)
 {
   _nc_noraw ();
-  fprintf (stdout, "samplerate=%i ", sample_rate);
-  fprintf (stdout, "channels=%i ", channels);
-  fprintf (stdout, "bits=%i ", bits);
+  fprintf (stdout, "samplerate=%i\n", sample_rate);
+  fprintf (stdout, "channels=%i\n", channels);
+  fprintf (stdout, "bits=%i\n", bits);
+  fprintf (stdout, "buffer_size=%i\n", buffer_size);
 
   switch (type)
   {
      case 'u':
-        fprintf (stdout, "type=ulaw ");
+        fprintf (stdout, "type=ulaw\n");
         break;
      case 's':
-        fprintf (stdout, "type=signed ");
+        fprintf (stdout, "type=signed\n");
         break;
      case 'f':
-        fprintf (stdout, "type=float ");
+        fprintf (stdout, "type=float\n");
         break;
      default:
-        fprintf (stdout, "type=%c ", type);
+        fprintf (stdout, "type=%c\n", type);
         break;
   }
 
   switch (encoding)
   {
     default:
-        fprintf (stdout, "encoding=%c ", encoding);
+        fprintf (stdout, "encoding=%c\n", encoding);
         break;
     case '0':
-        fprintf (stdout, "encoding=none ");
+        fprintf (stdout, "encoding=none\n");
         break;
     case 'b':
-        fprintf (stdout, "encoding=base64 ");
+        fprintf (stdout, "encoding=base64\n");
         break;
     case 'a':
-        fprintf (stdout, "encoding=ascii85 ");
+        fprintf (stdout, "encoding=ascii85\n");
         break;
   }
   switch (compression)
   {
     default:
-        fprintf (stdout, "compression=none");
+        fprintf (stdout, "compression=none\n");
         break;
     case 'z':
-        fprintf (stdout, "compression=z");
+        fprintf (stdout, "compression=z\n");
         break;
     case 'o':
-        fprintf (stdout, "compression=opus");
+        fprintf (stdout, "compression=opus\n");
         break;
   }
-  fprintf (stdout, "\n");
   fflush (NULL);
 }
 
@@ -378,7 +383,7 @@ void atty_speaker (void)
     if (buffered_samples < 0)
       buffered_samples = 0;
 
-    if (len >  buffer_samples)
+    if (len > buffer_size)
     {
       uLongf encoded_len = sizeof (audio_packet_z);
       data = audio_packet;
@@ -476,6 +481,11 @@ int main (int argc, char **argv)
       {
         sprintf (&config[strlen(config)],
                  "%sb=%i", config[0]?",":"", atoi(value));
+      }
+      else if (!strcmp (key, "buffer_size") ||  !strcmp (key, "B"))
+      {
+        sprintf (&config[strlen(config)],
+                 "%sB=%i", config[0]?",":"", atoi(value));
       }
       else if (!strcmp (key, "channels") ||  !strcmp (key, "c"))
       {
