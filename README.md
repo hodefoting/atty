@@ -2,7 +2,10 @@ atty - audio sound device for terminals
 =======================================
 
 A protocol extending ECMA-48 based terminals like xterm, linux console,
-gnome-terminal and more with audio playback and capture.
+gnome-terminal and more with audio playback and capture. Enabling programs
+running in a terminal to applications to play (and record audio) without
+linking system library and only communicating via stdin/stdout; thus also
+over telnet/ssh/mosh.
 
 Atty provides in a single binary commandline tools to configure and simplify
 use of a complying terminal; this binary also provides a "filter-terminal"
