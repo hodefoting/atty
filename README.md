@@ -1,17 +1,13 @@
 atty - audio sound device for terminals
 =======================================
 
-A protocol extending ECMA-48 based terminals like xterm, linux console,
-gnome-terminal and more with audio playback and capture. Enabling programs
-running in a terminal to applications to play (and record audio) without
-linking any system specific libraries and only communicating via stdin/stdout;
-thus also over telnet/ssh/mosh.
-
-Atty provides in a single binary commandline tools to configure and simplify
-use of a complying terminal; this binary also provides a "filter-terminal"
-similar to screen or tmux; that augments the terminal you run it in with audop
-capabilities.  Thus all linux terminals, including the console gets audio -
-since atty uses SDL2 for audio-output, this might even work on OSX.
+A protocol providing network transparent audio device access through
+stdin/stdout for terminal applications. The atty binary provides both an engine
+to augment a terminal with audio capabilities, and basic commmand for piping
+raw PCM data on stdin/stdout. This enables queuing of audio for playback to the
+terminal for TUI music players using special escape sequences, as well as
+recording (could be used to implement ssh based push-to-talk and even realtime
+audio communication tools.).
 
 Chunks of audio are transmitted in base64 or ascii85 encoding as APC escape
 sequences. With the default settings this brings back the sunaudio device for
