@@ -120,9 +120,6 @@ unsigned char LinearToMuLawSample(int16_t sample)
 
   int compressedByte = ~ (sign | (exponent << 4) | mantissa);
 
-  //if (compressedByte == 0) /* we hide all 0's in audio data
-  //                            it is the end-marker  */
-  //  compressedByte = 1;
   return (unsigned char)compressedByte;
 }
 
@@ -300,8 +297,8 @@ static void audio_task (MrgVT *vt, int click)
   }
 
   int free_frames = audio->buffer_size - SDL_GetQueuedAudioSize(speaker_device);
-  int queued = (pcm_write_pos - pcm_read_pos)/2;
-  if (free_frames > 6) free_frames -= 4;
+  int queued = (pcm_write_pos - pcm_read_pos)/2; // 2 for stereo
+  //if (free_frames > 6) free_frames -= 4;
   int frames = queued;
 
   if (frames > free_frames) frames = free_frames;

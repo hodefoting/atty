@@ -386,11 +386,11 @@ void atty_speaker (void)
     if (buffered_bytes < 0)
       buffered_bytes = 0;
 
-    if (buffered_bytes > buffer_size/2)
+    if (buffered_bytes > buffer_size * 2)
     {
-      int wait_bytes = buffered_bytes - buffer_size/2;
+      int wait_bytes = buffered_bytes - buffer_size * 2;
       usleep (wait_bytes * 1000 * 1000 / byte_rate);
-      buffered_bytes = buffer_size/2;
+      buffered_bytes = buffer_size * 2;
     }
     lost_start = atty_ticks ();
 
@@ -1207,8 +1207,7 @@ int ctx_vt_poll (MrgVT *vt, int timeout)
   int got_data = 0;
   int remaining_chars = 1024 * 1024;
   int len = 0;
-    audio_task (vt, 0);
-
+  audio_task (vt, 0);
 
   while (has_data (STDIN_FILENO, 10))
   {
