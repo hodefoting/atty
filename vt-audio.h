@@ -347,6 +347,19 @@ static void audio_task (MrgVT *vt, int click)
       SDL_PauseAudioDevice (speaker_device, 0);
     }
 
+#if 0
+    {
+       int i;
+       unsigned char *b = (void*)(&pcm_queue[pcm_read_pos]);
+       for (i = 0; i < frames * 4; i++)
+       {
+         if ((b[i] > ' ') && (b[i] <= '~'))
+           fprintf (stderr, "[%c]", b[i]);
+         else
+           fprintf (stderr, "[%i]", b[i]);
+       }
+    }
+#endif
     SDL_QueueAudio (speaker_device, (void*)&pcm_queue[pcm_read_pos], frames * 4);
     pcm_read_pos += frames*2;
     silence_start = ticks();
@@ -1300,7 +1313,7 @@ void vt_audio (MrgVT *vt, const char *command)
           audio->type = 's';
       }
 
-      /* onlt 1 and 2 channels supported */
+      /* only 1 and 2 channels supported */
       if (audio->channels <= 0 || audio->channels > 2)
       {
         audio->channels = 1;
@@ -1487,8 +1500,8 @@ void vt_audio (MrgVT *vt, const char *command)
            {
              for (int i = 0; i < audio->frames; i++)
              {
-               int val_left = ((int16_t*)(audio->data))[i*4];
-               int val_right = ((int16_t*)(audio->data))[i*4+2];
+               int val_left = ((int16_t*)(audio->data))[i*2];
+               int val_right = ((int16_t*)(audio->data))[i*2+1];
                terminal_queue_pcm (val_left, val_right);
              }
            }
@@ -1496,7 +1509,7 @@ void vt_audio (MrgVT *vt, const char *command)
            {
              for (int i = 0; i < audio->frames; i++)
              {
-               int val = ((int16_t*)(audio->data))[i*2];
+               int val = ((int16_t*)(audio->data))[i];
                terminal_queue_pcm (val, val);
              }
            }

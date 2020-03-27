@@ -394,7 +394,7 @@ void atty_speaker (void)
     }
     lost_start = atty_ticks ();
 
-    if (len > buffer_size)
+    if (len >= buffer_size)
     {
       uLongf encoded_len = sizeof (audio_packet_z);
       data = audio_packet;
