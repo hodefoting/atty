@@ -151,7 +151,7 @@ void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes)
   encoded[0]=0;
   if (audio->encoding == 'a')
   {
-    vt_a85enc (data, encoded, bytes);
+    a85enc (data, encoded, bytes);
   }
   else /* if (audio->encoding == 'b')  */
   {
@@ -222,11 +222,10 @@ static void mic_callback(void*     userdata,
   {
     for (int i = 0; i < frames; i++)
     {
-      for (int c = 0; c <  audio->channels; c++)
+      for (int c = 0; c < audio->channels; c++)
       {
-        *((int16_t*)&mic_buf[mic_buf_pos]) = (sstream[i]);
+        *((int16_t*)(&mic_buf[mic_buf_pos])) = (sstream[i]);
         mic_buf_pos+=2;
-
         if (mic_buf_pos >= MIC_BUF_LEN - 4)
           mic_buf_pos = 0;
       }
@@ -1354,8 +1353,8 @@ void vt_audio (MrgVT *vt, const char *command)
         int bin_length = audio->data_size;
         if (bin_length)
         {
-        uint8_t *data2 = malloc ((unsigned int)vt_a85len ((char*)audio->data, audio->data_size) + 1);
-        bin_length = vt_a85dec ((char*)audio->data,
+        uint8_t *data2 = malloc ((unsigned int)a85len ((char*)audio->data, audio->data_size) + 1);
+        bin_length = a85dec ((char*)audio->data,
                                 (void*)data2,
                                 bin_length);
         free (audio->data);
@@ -1480,8 +1479,8 @@ void vt_audio (MrgVT *vt, const char *command)
            {
              for (int i = 0; i < audio->frames; i++)
              {
-               int val_left = ((int8_t*)(audio->data))[i*2];
-               int val_right = ((int8_t*)(audio->data))[i*2+1];
+               int val_left = 256*((int8_t*)(audio->data))[i*2];
+               int val_right = 256*((int8_t*)(audio->data))[i*2+1];
                terminal_queue_pcm (val_left, val_right);
              }
            }
@@ -1489,7 +1488,7 @@ void vt_audio (MrgVT *vt, const char *command)
            {
              for (int i = 0; i < audio->frames; i++)
              {
-               int val = ((int8_t*)(audio->data))[i];
+               int val = 256*((int8_t*)(audio->data))[i];
                terminal_queue_pcm (val, val);
              }
            }

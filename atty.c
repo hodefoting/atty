@@ -33,10 +33,9 @@
 #include <termios.h>
 #include <pty.h>
 
+#include "a85.h"
+
 int atty_engine (void);
-int vt_a85enc (const void *srcp, char *dst, int count);
-int vt_a85dec (const char *src, char *dst, int count);
-int vt_a85len (const char *src, int count);
 int vt_base642bin (const char    *ascii,
                    int           *length,
                    unsigned char *bin);
@@ -416,7 +415,7 @@ void atty_speaker (void)
 
       if (encoding == 'a')
       {
-        int new_len = vt_a85enc (data, (char*)audio_packet_a85, encoded_len);
+        int new_len = a85enc (data, (char*)audio_packet_a85, encoded_len);
         audio_packet_a85[new_len]=0;
         data = audio_packet_a85;
       }
@@ -447,8 +446,8 @@ static void test_a85 (void)
   {
      char encoded[256];
      char decoded[256];
-     vt_a85enc (tests[i], encoded, strlen(tests[i]));
-     vt_a85dec (encoded, decoded, strlen(encoded));
+     a85enc (tests[i], encoded, strlen(tests[i]));
+     a85dec (encoded, decoded, strlen(encoded));
 
      if (strcmp (tests[i], decoded) ||
          strcmp (ref[i], encoded))
@@ -623,133 +622,6 @@ int main (int argc, char **argv)
   return 0;
 }
 
-int vt_a85enc (const void *srcp, char *dst, int count)
-{
-  const uint8_t *src = srcp;
-  int out_len = 0;
-
-  int padding = 4-(count % 4);
-  if (padding == 4) padding = 0;
-
-  for (int i = 0; i < (count+3)/4; i ++)
-  {
-    uint32_t input = 0;
-    for (int j = 0; j < 4; j++)
-    {
-      input = (input << 8);
-      if (i*4+j<=count)
-        input += src[i*4+j];
-    }
-
-    int divisor = 85 * 85 * 85 * 85;
-    if (input == 0)
-    {
-        dst[out_len++] = 'z';
-    }
-    else
-    {
-      for (int j = 0; j < 5; j++)
-      {
-        dst[out_len++] = ((input / divisor) % 85) + '!';
-        divisor /= 85;
-      }
-    }
-  }
-
-  out_len -= padding;
-
-  dst[out_len++]='~';
-  dst[out_len]=0;
-  return out_len;
-}
-
-int vt_a85dec (const char *src, char *dst, int count)
-{
-  int out_len = 0;
-  uint32_t val = 0;
-  int k = 0;
-
-  for (int i = 0; i < count; i ++, k++)
-  {
-    val *= 85;
-
-    if (src[i] == '~')
-      break;
-    else if (src[i] == 'z')
-    {
-      for (int j = 0; j < 4; j++)
-        dst[out_len++] = 0;
-      k = 0;
-    }
-    else
-    {
-      val += src[i]-'!';
-      if (k % 5 == 4)
-      {
-         for (int j = 0; j < 4; j++)
-         {
-           dst[out_len++] = (val & (0xff << 24)) >> 24;
-           val <<= 8;
-         }
-         val = 0;
-      }
-    }
-  }
-  k = k % 5;
-  if (k)
-  {
-    val += 84;
-#if 1
-    for (int j = k; j < 4; j++)
-    {
-      val *= 85;
-      val += 84;
-    }
-#endif
-
-    for (int j = 0; j < k-1; j++)
-    {
-      dst[out_len++] = (val & (0xff << 24)) >> 24;
-      val <<= 8;
-    }
-    val = 0;
-  //  out_len -= (5-k);
-  }
-  dst[out_len]=0;
-  return out_len;
-}
-
-int vt_a85len (const char *src, int count)
-{
-  int out_len = 0;
-  int k = 0;
-
-  for (int i = 0; src[i] && i < count; i ++, k++)
-  {
-    if (src[i] == '~')
-      break;
-    else if (src[i] == 'z')
-    {
-      out_len += 4;
-      k = 0;
-    }
-    else
-    {
-      if (k % 5 == 4)
-      {
-        out_len += 4;
-      }
-    }
-  }
-  k = k % 5;
-  if (k)
-  {
-    out_len += 4;
-    out_len -= (5-k);
-  }
-  return out_len + 10; // XXX redo a85len, a85dec seems to decode more
-}
-
 
 #define MIN(a,b) ((a)<(b)?(a):(b))
 
@@ -791,8 +663,8 @@ static int iterate (int timeoutms)
       {
         if (encoding == 'a')
         {
-          unsigned char *temp = malloc (vt_a85len (audio_packet, audio_packet_pos));
-          int len = vt_a85dec (audio_packet, (char*)temp, audio_packet_pos);
+          unsigned char *temp = malloc (a85len (audio_packet, audio_packet_pos));
+          int len = a85dec (audio_packet, (char*)temp, audio_packet_pos);
 
           if (compression == 'z')
           {
