@@ -791,7 +791,6 @@ static int iterate (int timeoutms)
       {
         if (encoding == 'a')
         {
-                    //fprintf (stderr, "!!!!\n");
           unsigned char *temp = malloc (vt_a85len (audio_packet, audio_packet_pos));
           int len = vt_a85dec (audio_packet, (char*)temp, audio_packet_pos);
 
@@ -1129,7 +1128,7 @@ static void vt_resize (int sig)
     return;
   if (ioctl (STDOUT_FILENO, TIOCGWINSZ, &ws) == -1)
     return;
-  vtpty_resize (&vt->vtpty, ws.ws_row, ws.ws_col, ws.ws_xpixel, ws.ws_ypixel);
+  vtpty_resize (&vt->vtpty, ws.ws_col, ws.ws_row, ws.ws_xpixel, ws.ws_ypixel);
 }
 
 static void ctx_vt_run_command (MrgVT *vt, const char *command)
