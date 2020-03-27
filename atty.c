@@ -37,13 +37,6 @@
 #include "base64.h"
 
 int atty_engine (void);
-int base642bin (const char    *ascii,
-                   int           *length,
-                   unsigned char *bin);
-void
-bin2base64 (const void *bin,
-               int         bin_length,
-               char       *ascii);
 
 typedef struct AudioState {
   int action;
@@ -79,13 +72,13 @@ struct _MrgVT {
   int       bell;
 #define MAX_ARGUMENT_BUF_LEN (8192 + 16)
 
-  char       *argument_buf;
-  int        argument_buf_len;
-  int        argument_buf_cap;
-  ssize_t(*write)(void *serial_obj, const void *buf, size_t count);
-  ssize_t(*read)(void *serial_obj, void *buf, size_t count);
-  int    (*waitdata)(void *serial_obj, int timeout);
-  void  (*resize)(void *serial_obj, int cols, int rows, int px_width, int px_height);
+  char     *argument_buf;
+  int       argument_buf_len;
+  int       argument_buf_cap;
+  ssize_t (*write)(void *serial_obj, const void *buf, size_t count);
+  ssize_t (*read)(void *serial_obj, void *buf, size_t count);
+  int     (*waitdata)(void *serial_obj, int timeout);
+  void    (*resize)(void *serial_obj, int cols, int rows, int px_width, int px_height);
 
   VtPty      vtpty;
 
@@ -762,7 +755,6 @@ void atty_mic (void)
   while (iterate (1000));
   at_exit_mic ();
 }
-
 
 #include <unistd.h>
 #include <assert.h>
