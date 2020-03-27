@@ -64,11 +64,11 @@ typedef struct VtPty {
   pid_t      pid;
 } VtPty;
 
-typedef struct _MrgVT MrgVT;
+typedef struct _VT VT;
 
-struct _MrgVT {
+struct _VT {
   char     *title;
-  void    (*state)(MrgVT *vt, int byte);
+  void    (*state)(VT *vt, int byte);
   int       bell;
 #define MAX_ARGUMENT_BUF_LEN (8192 + 16)
 
@@ -85,17 +85,17 @@ struct _MrgVT {
   AudioState audio;
 };
 
-static ssize_t vt_write (MrgVT *vt, const void *buf, size_t count)
+static ssize_t vt_write (VT *vt, const void *buf, size_t count)
 {
   if (!vt->write) return 0;
   return vt->write (&vt->vtpty, buf, count);
 }
-static ssize_t vt_read (MrgVT *vt, void *buf, size_t count)
+static ssize_t vt_read (VT *vt, void *buf, size_t count)
 {
   if (!vt->read) return 0;
   return vt->read (&vt->vtpty, buf, count);
 }
-static int vt_waitdata (MrgVT *vt, int timeout)
+static int vt_waitdata (VT *vt, int timeout)
 {
   if (!vt->waitdata) return 0;
   return vt->waitdata (&vt->vtpty, timeout);
@@ -768,7 +768,7 @@ void atty_mic (void)
 int   do_quit      = 0;
 
 static pid_t vt_child;
-static MrgVT *vt = NULL;
+static VT *vt = NULL;
 
 void
 signal_child (int signum)
@@ -796,7 +796,7 @@ signal_child (int signum)
 }
 
 
-const char *ctx_vt_find_shell_command (void)
+const char *vt_find_shell_command (void)
 {
   int i;
   const char *command = NULL;
@@ -817,14 +817,14 @@ const char *ctx_vt_find_shell_command (void)
   return command;
 }
 
-static void vt_state_neutral      (MrgVT *vt, int byte);
-static void vt_state_esc          (MrgVT *vt, int byte);
-static void vt_state_osc          (MrgVT *vt, int byte);
-static void vt_state_apc          (MrgVT *vt, int byte);
-static void vt_state_apc_generic  (MrgVT *vt, int byte);
-static void vt_state_esc_sequence (MrgVT *vt, int byte);
-static void vt_state_esc_foo      (MrgVT *vt, int byte);
-static void vt_state_swallow      (MrgVT *vt, int byte);
+static void vt_state_neutral      (VT *vt, int byte);
+static void vt_state_esc          (VT *vt, int byte);
+static void vt_state_osc          (VT *vt, int byte);
+static void vt_state_apc          (VT *vt, int byte);
+static void vt_state_apc_generic  (VT *vt, int byte);
+static void vt_state_esc_sequence (VT *vt, int byte);
+static void vt_state_esc_foo      (VT *vt, int byte);
+static void vt_state_swallow      (VT *vt, int byte);
 
 void vtpty_resize (void *data, int cols, int rows, int px_width, int px_height)
 {
@@ -884,7 +884,7 @@ static void vt_resize (int sig)
   vtpty_resize (&vt->vtpty, ws.ws_col, ws.ws_row, ws.ws_xpixel, ws.ws_ypixel);
 }
 
-static void ctx_vt_run_command (MrgVT *vt, const char *command)
+static void vt_run_command (VT *vt, const char *command)
 {
   struct winsize ws;
 
@@ -911,7 +911,7 @@ static void ctx_vt_run_command (MrgVT *vt, const char *command)
   //fcntl(vt->vtpty.pty, F_SETFL, O_NONBLOCK);
 }
 
-static void vtcmd_reset_to_initial_state (MrgVT *vt, const char *sequence)
+static void vtcmd_reset_to_initial_state (VT *vt, const char *sequence)
 {
   vt->audio.bits        = 8;
   vt->audio.channels    = 1;
@@ -923,9 +923,9 @@ static void vtcmd_reset_to_initial_state (MrgVT *vt, const char *sequence)
 }
 
 
-MrgVT *ctx_vt_new (const char *command, int cols, int rows, float font_size, float line_spacing)
+VT *vt_new (const char *command, int cols, int rows, float font_size, float line_spacing)
 {
-  MrgVT *vt         = calloc (sizeof (MrgVT), 1);
+  VT *vt         = calloc (sizeof (VT), 1);
   vt->state         = vt_state_neutral;
   vt->waitdata      = vtpty_waitdata;
   vt->read          = vtpty_read;
@@ -940,20 +940,20 @@ MrgVT *ctx_vt_new (const char *command, int cols, int rows, float font_size, flo
 
   if (command)
   {
-    ctx_vt_run_command (vt, command);
+    vt_run_command (vt, command);
   }
 
   if (cols <= 0) cols = 80;
   if (rows <= 0) cols = 24;
 
-  //ctx_vt_set_term_size (vt, cols, rows);
+  //vt_set_term_size (vt, cols, rows);
 
   vtcmd_reset_to_initial_state (vt, NULL);
 
   return vt;
 }
 
-int ctx_vt_poll (MrgVT *vt, int timeout)
+int vt_poll (VT *vt, int timeout)
 {
   int read_size = sizeof(buf);
   int got_data = 0;
@@ -985,7 +985,7 @@ int ctx_vt_poll (MrgVT *vt, int timeout)
   return got_data;
 }
 
-void ctx_vt_destroy (MrgVT *vt)
+void vt_destroy (VT *vt)
 {
   free (vt->argument_buf);
 
@@ -1000,23 +1000,23 @@ int atty_engine (void)
   printf ("atty v0.0\n");
   _nc_raw ();
   setsid();
-  vt = ctx_vt_new (shell?shell:ctx_vt_find_shell_command(), 80, 24, 14, 1.0);
+  vt = vt_new (shell?shell:vt_find_shell_command(), 80, 24, 14, 1.0);
 
   int sleep_time = 2500;
 
   vt_child = vt->vtpty.pid;
   signal (SIGCHLD, signal_child);
-  ctx_vt_bell (vt);
+  vt_bell (vt);
   while(!do_quit)
   {
-    ctx_vt_poll (vt, sleep_time);
+    vt_poll (vt, sleep_time);
   }
-  ctx_vt_destroy (vt);
+  vt_destroy (vt);
   _nc_noraw ();
   return 0;
 }
 
-static void ctx_vt_argument_buf_reset (MrgVT *vt, const char *start)
+static void vt_argument_buf_reset (VT *vt, const char *start)
 {
   if (start)
   {
@@ -1027,7 +1027,7 @@ static void ctx_vt_argument_buf_reset (MrgVT *vt, const char *start)
     vt->argument_buf[vt->argument_buf_len=0]=0;
 }
 
-static inline void ctx_vt_argument_buf_add (MrgVT *vt, int ch)
+static inline void vt_argument_buf_add (VT *vt, int ch)
 {
   if (vt->argument_buf_len + 1 >= 1024 * 1024 * 2)
     return; // XXX : perhaps we should bail at 1mb + 1kb ?
@@ -1043,13 +1043,13 @@ static inline void ctx_vt_argument_buf_add (MrgVT *vt, int ch)
   vt->argument_buf[++vt->argument_buf_len] = 0;
 }
 
-static void vt_state_swallow (MrgVT *vt, int byte)
+static void vt_state_swallow (VT *vt, int byte)
 {
   vt->state = vt_state_neutral;
 }
-static void ensure_title (MrgVT *vt);
+static void ensure_title (VT *vt);
 
-static void vt_state_apc_audio (MrgVT *vt, int byte)
+static void vt_state_apc_audio (VT *vt, int byte)
 {
   if ((byte < 32) && ( (byte < 8) || (byte > 13)) )
   {
@@ -1059,12 +1059,12 @@ static void vt_state_apc_audio (MrgVT *vt, int byte)
   }
   else
   {
-    ctx_vt_argument_buf_add (vt, byte);
+    vt_argument_buf_add (vt, byte);
   }
 }
 
 
-static void vt_state_apc_generic (MrgVT *vt, int byte)
+static void vt_state_apc_generic (VT *vt, int byte)
 {
   if ((byte < 32) && ((byte < 8) || (byte > 13)))
   {
@@ -1072,15 +1072,15 @@ static void vt_state_apc_generic (MrgVT *vt, int byte)
   }
   else
   {
-    ctx_vt_argument_buf_add (vt, byte);
+    vt_argument_buf_add (vt, byte);
   }
 }
 
-static void vt_state_apc (MrgVT *vt, int byte)
+static void vt_state_apc (VT *vt, int byte)
 {
   if (byte == 'A')
   {
-    ctx_vt_argument_buf_add (vt, byte);
+    vt_argument_buf_add (vt, byte);
     vt->state = vt_state_apc_audio;
   }
   else if ((byte < 32) && ( (byte < 8) || (byte > 13)) )
@@ -1089,24 +1089,24 @@ static void vt_state_apc (MrgVT *vt, int byte)
   }
   else
   {
-    ctx_vt_argument_buf_add (vt, byte);
+    vt_argument_buf_add (vt, byte);
     vt->state = vt_state_apc_generic;
   }
 }
 
-static void handle_sequence (MrgVT *vt, const char *sequence)
+static void handle_sequence (VT *vt, const char *sequence)
 {
   printf ("\e%s", sequence);
 }
 
-static void vt_state_esc_foo (MrgVT *vt, int byte)
+static void vt_state_esc_foo (VT *vt, int byte)
 {
-  ctx_vt_argument_buf_add (vt, byte);
+  vt_argument_buf_add (vt, byte);
   vt->state = vt_state_neutral;
   handle_sequence (vt, vt->argument_buf);
 }
 
-static void vt_state_esc_sequence (MrgVT *vt, int byte)
+static void vt_state_esc_sequence (VT *vt, int byte)
 {
   if (byte < ' ' && byte != 27)
   {
@@ -1119,13 +1119,13 @@ static void vt_state_esc_sequence (MrgVT *vt, int byte)
     }
     else if (byte >= '@' && byte <= '~')
     {
-      ctx_vt_argument_buf_add (vt, byte);
+      vt_argument_buf_add (vt, byte);
       vt->state = vt_state_neutral;
       handle_sequence (vt, vt->argument_buf);
     }
     else
     {
-      ctx_vt_argument_buf_add (vt, byte);
+      vt_argument_buf_add (vt, byte);
     }
   }
 }
@@ -1139,7 +1139,7 @@ static inline int parse_int (const char *arg, int def_val)
 
 static int last_title_mic = 0;
 
-static void update_title (MrgVT *vt)
+static void update_title (VT *vt)
 {
   if (vt->audio.mic)
   {
@@ -1153,7 +1153,7 @@ static void update_title (MrgVT *vt)
   last_title_mic = vt->audio.mic;
 }
 
-static void ensure_title (MrgVT *vt)
+static void ensure_title (VT *vt)
 {
   if (vt->audio.mic != last_title_mic)
   {
@@ -1161,7 +1161,7 @@ static void ensure_title (MrgVT *vt)
   }
 }
 
-static void vt_state_osc (MrgVT *vt, int byte)
+static void vt_state_osc (VT *vt, int byte)
 {
       if ((byte < 32) && ( (byte < 8) || (byte > 13)) )
       {
@@ -1195,11 +1195,11 @@ static void vt_state_osc (MrgVT *vt, int byte)
       }
       else
       {
-        ctx_vt_argument_buf_add (vt, byte);
+        vt_argument_buf_add (vt, byte);
       }
 }
 
-static void vt_state_esc (MrgVT *vt, int byte)
+static void vt_state_esc (VT *vt, int byte)
 {
   if (byte < ' ' && byte != 27)
   {
@@ -1216,7 +1216,7 @@ static void vt_state_esc (MrgVT *vt, int byte)
     case '(':
       {
         char tmp[]={byte, '\0'};
-        ctx_vt_argument_buf_reset(vt, tmp);
+        vt_argument_buf_reset(vt, tmp);
         vt->state = vt_state_esc_foo;
       }
       break;
@@ -1226,14 +1226,14 @@ static void vt_state_esc (MrgVT *vt, int byte)
     case '*':
       {
         char tmp[]={byte, '\0'};
-        ctx_vt_argument_buf_reset(vt, tmp);
+        vt_argument_buf_reset(vt, tmp);
         vt->state = vt_state_esc_sequence;
       }
       break;
     case ']':
       {
         char tmp[]={byte, '\0'};
-        ctx_vt_argument_buf_reset(vt, tmp);
+        vt_argument_buf_reset(vt, tmp);
         vt->state = vt_state_osc;
       }
       break;
@@ -1241,7 +1241,7 @@ static void vt_state_esc (MrgVT *vt, int byte)
     case '_':  // APC
       {
         char tmp[]={byte, '\0'};
-        ctx_vt_argument_buf_reset(vt, tmp);
+        vt_argument_buf_reset(vt, tmp);
         vt->state = vt_state_apc;
       }
       break;
@@ -1256,7 +1256,7 @@ static void vt_state_esc (MrgVT *vt, int byte)
   }
 }
 
-static void vt_state_neutral (MrgVT *vt, int byte)
+static void vt_state_neutral (VT *vt, int byte)
 {
   if (byte < ' ' && byte != 27)
   {

@@ -74,7 +74,7 @@ void terminal_queue_pcm (int16_t sample_left, int16_t sample_right)
 
 float click_volume = 0.05;
 
-void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes);
+void vt_feed_audio (VT *vt, void *samples, int bytes);
 int mic_device = 0;   // when non 0 we have an active mic device
 
 
@@ -123,7 +123,7 @@ unsigned char LinearToMuLawSample(int16_t sample)
   return (unsigned char)compressedByte;
 }
 
-void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes)
+void vt_feed_audio (VT *vt, void *samples, int bytes)
 {
   char buf[256];
   AudioState *audio = &vt->audio;
@@ -255,7 +255,7 @@ static void sdl_audio_init ()
   }
 }
 
-static void audio_task (MrgVT *vt, int click)
+static void audio_task (VT *vt, int click)
 {
   AudioState *audio = &vt->audio;
 
@@ -280,7 +280,7 @@ static void audio_task (MrgVT *vt, int click)
     if (mic_buf_pos)
     {
       SDL_LockAudioDevice (mic_device);
-      ctx_vt_feed_audio (vt, mic_buf, mic_buf_pos);
+      vt_feed_audio (vt, mic_buf, mic_buf_pos);
       mic_buf_pos = 0;
       SDL_UnlockAudioDevice (mic_device);
     }
@@ -1182,7 +1182,7 @@ static short MuLawDecompressTable[256] =
 };
 
 
-static void ctx_vt_bell (MrgVT *vt)
+static void vt_bell (VT *vt)
 {
   if (vt->bell < 2)
     return;
@@ -1197,7 +1197,7 @@ static void ctx_vt_bell (MrgVT *vt)
 
 void terminal_queue_pcm (int16_t sample_left, int16_t sample_right);
 
-void vt_audio (MrgVT *vt, const char *command)
+void vt_audio (VT *vt, const char *command)
 {
   AudioState *audio = &vt->audio;
   // the simplest form of audio is raw audio
