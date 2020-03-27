@@ -155,7 +155,7 @@ void ctx_vt_feed_audio (MrgVT *vt, void *samples, int bytes)
   }
   else /* if (audio->encoding == 'b')  */
   {
-    vt_bin2base64 (data, bytes, encoded);
+    bin2base64 (data, bytes, encoded);
   }
 
   sprintf (buf, "\e[_Af=%i;", frames);
@@ -1368,9 +1368,9 @@ void vt_audio (MrgVT *vt, const char *command)
       {
         int bin_length = audio->data_size;
         uint8_t *data2 = malloc (audio->data_size);
-        bin_length = vt_base642bin ((char*)audio->data,
-                                    &bin_length,
-                                    data2);
+        bin_length = base642bin ((char*)audio->data,
+                                 &bin_length,
+                                 data2);
         memcpy (audio->data, data2, bin_length + 1);
         audio->data_size = bin_length;
         free (data2);
