@@ -138,3 +138,34 @@ static int a85len (const char *src, int count)
   }
   return out_len + 10; // XXX redo a85len, a85dec seems to decode more
 }
+
+
+#if 0
+static void test_a85 (void)
+{
+  char *tests[]={"foo", "foo0", "foo012", "foo0123", "foo01234", "foo012345", NULL};
+  char *ref[]={"AoDS~", "AoDTA~", "AoDTA0er~", "AoDTA0etN~", "AoDTA0etOA~", "AoDTA0etOA2#~", NULL};
+
+  for (int i =0; tests[i];i++)
+  {
+     char encoded[256];
+     char decoded[256];
+     a85enc (tests[i], encoded, strlen(tests[i]));
+     a85dec (encoded, decoded, strlen(encoded));
+
+     if (strcmp (tests[i], decoded) ||
+         strcmp (ref[i], encoded))
+     {
+       printf ("  %i: [%s]\n", i, tests[i]);
+       printf ("  d: [%s]\n", decoded);
+       printf ("  e: [%s]\n", encoded);
+       printf ("  r: [%s]\n", ref[i]);
+     }
+     else
+     {
+       printf ("OK %i\n", i);
+     }
+  }
+  exit (0);
+}
+#endif

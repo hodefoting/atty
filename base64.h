@@ -32,7 +32,7 @@ static void bin2base64_group (const unsigned char *in, int remaining, char *out)
     out[i] = base64_map[digit[i]];
 }
 
-static void
+static inline void
 bin2base64 (const void *bin,
             int         bin_length,
             char       *ascii)
