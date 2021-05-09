@@ -299,7 +299,7 @@ int vt_poll (VT *vt, int timeout)
   int got_data = 0;
   int remaining_chars = 1024 * 1024;
   int len = 0;
-  audio_task (vt, 0);
+  vt_audio_task (vt, 0);
 
   while (has_data (STDIN_FILENO, 10))
   {
@@ -319,7 +319,7 @@ int vt_poll (VT *vt, int timeout)
     got_data+=len;
     remaining_chars -= len;
     timeout -= 10;
-    audio_task (vt, 0);
+    vt_audio_task (vt, 0);
   }
   fflush (NULL);
   return got_data;

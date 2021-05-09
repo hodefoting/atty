@@ -512,7 +512,7 @@ void atty_speaker (void)
       }
       else if (encoding == 'b')
       {
-        int new_len = bin2base64 (data, 
+        int new_len = ctx_bin2base64 (data, 
             encoded_len,
             (char*)audio_packet_a85);
         data = audio_packet_a85;
@@ -610,7 +610,7 @@ static int mic_iterate (int timeoutms)
         {
           uint8_t *temp = malloc (audio_packet_pos);
           int len = audio_packet_pos;
-          base642bin (audio_packet,
+          ctx_base642bin (audio_packet,
                   &len,
                   temp);
           // XXX : NYI compression inside base64

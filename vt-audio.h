@@ -16,7 +16,9 @@
  */
 
 
+#ifndef NO_SDL
 #include <SDL.h>
+#endif
 #include <zlib.h>
 
 static int ydec (const void *srcp, void *dstp, int count)
@@ -35,7 +37,7 @@ static int ydec (const void *srcp, void *dstp, int count)
               o = (o-42-64) % 256;
               break;
       case '\n':
-      case '\e':
+      case '\033':
       case '\r':
       case '\0':
               break;
@@ -49,7 +51,9 @@ static int ydec (const void *srcp, void *dstp, int count)
   return out_len;
 }
 
+#ifndef NO_SDL
 static SDL_AudioDeviceID speaker_device = 0;
+#endif
 
 //#define AUDIO_CHUNK_SIZE 512
 
@@ -137,7 +141,7 @@ void vt_feed_audio (VT *vt, void *samples, int bytes)
     int z_result = compress (data, &len, samples, len);
     if (z_result != Z_OK)
     {
-      char buf[256]= "\e_Ao=z;zlib error2\e\\";
+      char buf[256]= "\033_Ao=z;zlib error2\033\\";
       vt_write (vt, buf, strlen(buf));
       data = samples;
     }
@@ -155,10 +159,10 @@ void vt_feed_audio (VT *vt, void *samples, int bytes)
   }
   else /* if (audio->encoding == 'b')  */
   {
-    bin2base64 (data, bytes, encoded);
+    ctx_bin2base64 (data, bytes, encoded);
   }
 
-  sprintf (buf, "\e[_Af=%i;", frames);
+  sprintf (buf, "\033[_Af=%i;", frames);
   vt_write (vt, buf, strlen (buf));
   vt_write (vt, encoded, strlen(encoded));
   free (encoded);
@@ -167,7 +171,7 @@ void vt_feed_audio (VT *vt, void *samples, int bytes)
     free (data);
 
   //vt_write (vt, samples, bytes);
-  buf[0]='\e';
+  buf[0]='\033';
   buf[1]='\\';
   buf[2]=0;
   vt_write (vt, buf, 2);
@@ -245,17 +249,21 @@ static void sdl_audio_init ()
   static int done = 0;
   if (!done)
   {
+#ifndef NO_SDL
   if (SDL_Init(SDL_INIT_AUDIO) < 0)
   {
     fprintf (stderr, "sdl audio init fail\n");
   }
+#endif
   done = 1;
   }
 }
 
-static void audio_task (VT *vt, int click)
+void vt_audio_task (VT *vt, int click)
 {
+  if (!vt) return;
   AudioState *audio = &vt->audio;
+#ifndef NO_SDL
 
   if (audio->mic)
   {
@@ -370,6 +378,7 @@ static void audio_task (VT *vt, int click)
       speaker_device = 0;
     }
   }
+#endif
 }
 
 void terminal_queue_pcm (int16_t sample_left, int16_t sample_right);
@@ -1176,7 +1185,7 @@ static short MuLawDecompressTable[256] =
 };
 
 
-static void vt_bell (VT *vt)
+void vt_bell (VT *vt)
 {
   if (vt->bell < 2)
     return;
@@ -1243,7 +1252,7 @@ void vt_audio (VT *vt, const char *command)
         case 'a':range="t,q";break;
         default:range="unknown";break;
       }
-      sprintf (buf, "\e_A%c=?;%s\e\\", key, range);
+      sprintf (buf, "\033_A%c=?;%s\033\\", key, range);
       vt_write (vt, buf, strlen(buf));
       return;
     }
@@ -1347,6 +1356,8 @@ void vt_audio (VT *vt, const char *command)
         if (bin_length)
         {
         uint8_t *data2 = malloc ((unsigned int)a85len ((char*)audio->data, audio->data_size) + 1);
+        // a85len is inaccurate but gives an upper bound,
+        // should be fixed.
         bin_length = a85dec ((char*)audio->data,
                                 (void*)data2,
                                 bin_length);
@@ -1361,9 +1372,9 @@ void vt_audio (VT *vt, const char *command)
       {
         int bin_length = audio->data_size;
         uint8_t *data2 = malloc (audio->data_size);
-        bin_length = base642bin ((char*)audio->data,
-                                 &bin_length,
-                                 data2);
+        bin_length = ctx_base642bin ((char*)audio->data,
+                                     &bin_length,
+                                     data2);
         memcpy (audio->data, data2, bin_length + 1);
         audio->data_size = bin_length;
         free (data2);
@@ -1514,7 +1525,7 @@ void vt_audio (VT *vt, const char *command)
     case 'q': // query
        {
          char buf[512];
-         sprintf (buf, "\e_As=%i,b=%i,c=%i,T=%c,B=%i,e=%c,o=%c;OK\e\\",
+         sprintf (buf, "\033_As=%i,b=%i,c=%i,T=%c,B=%i,e=%c,o=%c;OK\033\\",
       audio->samplerate, audio->bits, audio->channels, audio->type,
       audio->buffer_size,
       audio->encoding?audio->encoding:'0',
@@ -1533,6 +1544,3 @@ void vt_audio (VT *vt, const char *command)
     audio->data = NULL;
     audio->data_size=0;
 }
-
-
-// YYYYY
