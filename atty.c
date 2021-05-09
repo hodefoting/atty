@@ -485,6 +485,7 @@ void atty_speaker (void)
     {
       uLongf encoded_len = sizeof (audio_packet_z);
       data = audio_packet;
+      int data_len = encoded_len;
 
       if (compression == 'z')
       {
@@ -499,6 +500,7 @@ void atty_speaker (void)
         {
           data = audio_packet_z;
         }
+        data_len = encoded_len;
       }
 
       if (encoding == 'a')
@@ -506,14 +508,25 @@ void atty_speaker (void)
         int new_len = a85enc (data, (char*)audio_packet_a85, encoded_len);
         audio_packet_a85[new_len]=0;
         data = audio_packet_a85;
+        data_len = new_len;
       }
-      if (encoding == 'b')
+      else if (encoding == 'b')
       {
-        // TODO
+        int new_len = bin2base64 (data, 
+            encoded_len,
+            (char*)audio_packet_a85);
+        data = audio_packet_a85;
+        data_len = new_len;
+      }
+      else
+      {
+        // we need a text encoding
+        return;
       }
 
       fprintf (stdout, "\033_Af=%i;", len / channels / (bits/8));
-      fwrite (data, 1, strlen ((char*)data), stdout);
+      //fwrite (data, 1, strlen ((char*)data), stdout);
+      fwrite (data, 1, data_len, stdout);
       fwrite ("\e\\", 1, 2, stdout);
       fflush (stdout);
 
@@ -523,6 +536,9 @@ void atty_speaker (void)
   }
 }
 
+///////
+// timestamped packets of audio is better..
+// this would also permit 
 ///////
 
 static int in_audio_data = 0;
@@ -597,6 +613,8 @@ static int mic_iterate (int timeoutms)
           base642bin (audio_packet,
                   &len,
                   temp);
+          // XXX : NYI compression inside base64
+
           fwrite (temp, 1, len, stdout);
           fflush (stdout);
           free (temp);
