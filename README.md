@@ -88,7 +88,7 @@ The recognized values for a key can be queried with:
 
 This generates responses of the form:
 
-[ESC]_As=?;8000,16000,24000,480000[ESC]\
+[ESC]_As=?;8000,16000,24000,48000[ESC]\
 
 At the moment all valid keys are expressed as comma separated lists,
 
